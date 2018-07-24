@@ -1,0 +1,21 @@
+{
+    "name": "framed",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+        "start": "tsc -w",
+        "build": "tsc",
+        "demo": "yarn build && node lib/demo"
+    },
+    "devDependencies": {
+        "@types/body-parser": "^1.17.0",
+        "@types/express": "^4.16.0",
+        "typescript": "^2.9.2"
+    },
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.3",
+        "io-ts": "^1.2.1"
+    }
+}
