@@ -1,43 +1,28 @@
-import * as t from "io-ts";
-import { createApp, RestError, RestResult } from "../index";
+import { createApp, RestResult } from "../index";
+
+const logger = () => ({
+    info: (msg: any) => console.log("INFO: " + msg)
+});
 
 const app = createApp({
+    title: "Framework Demo App",
+    version: "0.0.1",
+    description: "A demo app for framework with lovely types",
     host: "example.com",
     basePath: "/demo",
     schemes: ["http"],
-    injectors: []
-});
-
-const paramsSchema = t.interface({
-    segmentId: t.string
-});
-
-const bodySchema = t.interface({
-    id: t.string,
-    age: t.number
+    inject: {
+        logger
+    }
 });
 
 app.controller({
+    description: "A test route",
     verb: "post",
     path: "/test2/:segmentId",
-    validation: {
-        params: paramsSchema,
-        body: bodySchema
-    },
-    handler: ({ body: { id, age }, params: { segmentId } }) => {
-        if (id === "1") {
-            return new RestResult({ id, name, age }, 201);
-        }
-
-        if (id === "5") {
-            throw new RestError("oh no", 404);
-        }
-
-        return {
-            id,
-            name,
-            age
-        };
+    handler: ({ logger }) => {
+        logger.info("Cool shit");
+        return new RestResult({}, 200);
     }
 });
 

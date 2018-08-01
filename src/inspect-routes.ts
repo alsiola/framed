@@ -1,13 +1,16 @@
 import * as t from "io-ts";
+import { Injector } from "./create-app";
 import { ControllerOpts, HttpVerb } from "./create-controller";
 
 export interface RouteInfo {
+    description: string;
     verb: HttpVerb;
     path: string;
     params: Array<{
         name: string;
         type: string;
     }>;
+    hasParams: boolean;
 }
 
 const getParamType = (
@@ -26,28 +29,20 @@ const getParamType = (
     }
 };
 
-export const inspectRoutes = (
-    routes: ControllerOpts<any, any, any, any, any, any, any, any, any>[]
-) => (): RouteInfo[] => {
-    const paramRegex = /\:[a-zA-Z0-9]+\/?/;
+const paramRegex = /\:[a-zA-Z0-9]+\/?/;
 
-    return routes.map(({ verb, path, validation }) => {
-        const params = paramRegex.exec(path);
+export const inspectRoutes = <T extends Record<string, Injector<any>>>(
+    routes: ControllerOpts<T>[]
+) => (): RouteInfo[] => {
+    return routes.map(({ verb, path, description = "" }) => {
         return {
+            description,
             path: path.replace(
                 paramRegex,
                 match => "{" + match.substr(1) + "}"
             ),
-            params:
-                params === null
-                    ? []
-                    : params.map(param => {
-                          const name = param.substr(1);
-                          return {
-                              name,
-                              type: getParamType(name, validation.params)
-                          };
-                      }),
+            params: [],
+            hasParams: false,
             verb
         };
     });

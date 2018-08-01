@@ -4,9 +4,9 @@ swagger: "2.0"
 #                              API Information                                 #
 ################################################################################
 info:
-  version: 1.0.0
-  title: Hive Survey Service
-  description: Collect data from users.
+  version: 0.0.1
+  title: Framework Demo App
+  description: A demo app for framework with lovely types
 
 ################################################################################
 #             Host, Base Path, Schemes, Content Types and Security             #
@@ -26,8 +26,4 @@ produces:
 paths:
   /test2/{segmentId}:
     post:
-      parameters:
-        - in: path
-          name: segmentId
-          schema:
-            type: string
+      description: A test route

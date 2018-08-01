@@ -1,11 +1,9 @@
 import { readFileSync, writeFileSync } from "fs";
 import * as handlebars from "handlebars";
+import { SwaggerOpts } from "./create-app";
 import { RouteInfo } from "./inspect-routes";
 
-interface AppInfo {
-    host: string;
-    basePath: string;
-    schemes: string[];
+interface AppInfo extends SwaggerOpts {
     routes: RouteInfo[];
 }
 

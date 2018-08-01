@@ -4,9 +4,9 @@ swagger: "2.0"
 #                              API Information                                 #
 ################################################################################
 info:
-  version: 1.0.0
-  title: Hive Survey Service
-  description: Collect data from users.
+  version: {{version}}
+  title: {{title}}
+  description: {{description}}
 
 ################################################################################
 #             Host, Base Path, Schemes, Content Types and Security             #
@@ -29,11 +29,14 @@ paths:
 {{#each routes}}
   {{path}}:
     {{verb}}:
-      {{#each params}}
+      description: {{description}}
+      {{#if hasParams}}
       parameters:
+      {{#each params}}
         - in: path
           name: {{name}}
           schema:
             type: {{type}}
     {{/each}}
+    {{/if}}
 {{/each}}

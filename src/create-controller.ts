@@ -1,83 +1,60 @@
-import { Application, Response } from "express";
-import * as t from "io-ts";
+import { Application, Request, Response } from "express";
 import { Injector } from "./create-app";
 import { RestResult } from "./responses";
 
 export type HttpVerb = "get" | "post";
 
-interface FramedRequest<Q, P, B> {
-    query: Q;
-    params: P;
-    body: B;
-    request: Request;
-}
+export type Injected<T extends Record<string, Injector<any>>> = {
+    [K in keyof T]: ReturnType<T[K]>
+};
 
-export interface ControllerOpts<Q, QO, QI, P, PO, PI, B, BO, BI> {
+export interface ControllerOpts<T extends Record<string, Injector<any>>> {
+    description?: string;
     path: string;
     verb: HttpVerb;
-    validation: {
-        query?: t.InterfaceType<Q, QO, QI>;
-        params?: t.InterfaceType<P, PO, PI>;
-        body?: t.InterfaceType<B, BO, BI>;
-    };
-    handler: (req: FramedRequest<QO, PO, BO>) => any;
+    handler: (req: Injected<T>) => any;
 }
 
-export type ControllerOptsAny = ControllerOpts<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
->;
-
-export const createController = <T extends object>(
+export function createController<T extends Record<string, Injector<any>>>(
     app: Application,
-    injectors: Injector<T>[],
-    registerRoute: (route: any) => void
-) => <Q, QO, QI, P, PO, PI, B, BO, BI>({
-    verb,
-    path,
-    validation: { query, params, body },
-    handler
-}: ControllerOpts<Q, QO, QI, P, PO, PI, B, BO, BI>) => {
-    registerRoute({
-        verb,
-        path,
-        validation: { query, params, body },
-        handler
-    });
-    app[verb].apply(
-        app,
-        [
+    injectors: T,
+    registerRoute: (route: ControllerOpts<T>) => void
+) {
+    return ({ verb, path, handler, description }: ControllerOpts<T>) => {
+        registerRoute({
+            verb,
             path,
-            (req: Request, res: Response) => {
-                try {
-                    const ctx = injectors.reduce(
-                        (out, curr) => ({
-                            ...out,
-                            ...(curr(out) as any)
-                        }),
-                        {}
-                    );
-                    const result = handler(ctx);
+            handler,
+            description
+        });
+        app[verb].apply(
+            app,
+            [
+                path,
+                (req: Request, res: Response) => {
+                    try {
+                        const ctx = Object.entries(injectors).reduce(
+                            (out, [key, injector]) => ({
+                                ...out,
+                                [key]: injector()
+                            }),
+                            {}
+                        );
+                        const result = handler(ctx as Injected<T>);
 
-                    if (result instanceof RestResult) {
-                        return result.send(res);
-                    }
+                        if (result instanceof RestResult) {
+                            return result.send(res);
+                        }
 
-                    res.send(result);
-                } catch (err) {
-                    if (err instanceof RestResult) {
-                        return err.send(res);
+                        res.send(result);
+                    } catch (err) {
+                        if (err instanceof RestResult) {
+                            return err.send(res);
+                        }
+                        res.status(500).send(err.message);
                     }
-                    res.status(500).send(err.message);
                 }
-            }
-        ].filter(x => !!x)
-    );
-};
+            ].filter(x => !!x)
+        );
+    };
+}

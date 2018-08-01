@@ -1,43 +1,43 @@
-import bodyParser from "body-parser";
 import express from "express";
-import { ControllerOptsAny, createController } from "./create-controller";
+import { ControllerOpts, createController } from "./create-controller";
 import { inspectRoutes } from "./inspect-routes";
 import { makeSwagger } from "./swagger-gen";
 
-export type Injector<T extends object> = (req: {}) => T;
+export type Injector<T extends object> = () => T;
 
-export interface AppOpts<T extends object> {
+export interface SwaggerOpts {
+    version: string;
+    title: string;
+    description: string;
     basePath: string;
     host: string;
     schemes: string[];
-    injectors: Injector<T>[];
 }
 
-export const createApp = <T extends object>({
-    basePath,
-    host,
-    schemes,
-    injectors
-}: AppOpts<T>) => {
-    const app = express();
-    app.use(bodyParser.json());
-    const routes: ControllerOptsAny[] = [];
+export interface AppOpts<T extends Record<string, Injector<any>>> {
+    inject: T;
+}
 
-    const registerRoute = (route: ControllerOptsAny) => {
+export function createApp<T extends Record<string, Injector<any>>>({
+    inject,
+    ...swaggerOpts
+}: AppOpts<T> & SwaggerOpts) {
+    const app = express();
+    const routes: ControllerOpts<T>[] = [];
+
+    const registerRoute = (route: ControllerOpts<T>) => {
         routes.push(route);
     };
 
     return {
-        controller: createController(app, injectors, registerRoute),
+        controller: createController<T>(app, inject, registerRoute),
         start: (port: number) =>
             app.listen(port, () => console.log("Heeeere we go...")),
         inspectRoutes: inspectRoutes(routes),
         makeSwagger: () =>
             makeSwagger({
                 routes: inspectRoutes(routes)(),
-                basePath,
-                host,
-                schemes
+                ...swaggerOpts
             })
     };
-};
+}
