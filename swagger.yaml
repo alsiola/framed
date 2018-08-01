@@ -1,0 +1,33 @@
+swagger: "2.0"
+
+################################################################################
+#                              API Information                                 #
+################################################################################
+info:
+  version: 1.0.0
+  title: Hive Survey Service
+  description: Collect data from users.
+
+################################################################################
+#             Host, Base Path, Schemes, Content Types and Security             #
+################################################################################
+host: example.com
+basePath: /demo
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+
+################################################################################
+#                                  Paths                                       #
+################################################################################
+paths:
+  /test2/{segmentId}:
+    post:
+      parameters:
+        - in: path
+          name: segmentId
+          schema:
+            type: string
