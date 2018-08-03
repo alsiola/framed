@@ -36,7 +36,7 @@ app.controller({
     },
     handler: ({ logger, body: { userId } }) => {
         logger.info("We got a request going on");
-        return Promise.resolve(new RestResult(userId));
+        return Promise.resolve(new RestResult({ userId }));
     }
 });
 

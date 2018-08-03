@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
 import { BaseRequest, Injector } from "./create-app";
-import { RestResult } from "./responses";
+import { RestError, RestResult } from "./responses";
 
 export type HttpVerb = "get" | "post";
 
@@ -18,7 +18,9 @@ export interface ControllerOpts<
     path: string;
     verb: HttpVerb;
     inject?: U;
-    handler: (req: Injected<T & U>) => any | Promise<any>;
+    handler: (
+        req: Injected<T & U>
+    ) => RestResult<any> | Promise<RestResult<any>>;
 }
 
 const runInjectors = <T extends Record<string, Injector<any>>>(
@@ -79,18 +81,16 @@ export const createController = <T extends Record<string, Injector<any, any>>>(
                             ? await runInjectors(controllerInjectors, appCtx)
                             : appCtx;
 
-                        const result = await handler(ctx as Injected<T & U>);
+                        const result: RestResult<any> = await handler(
+                            ctx as Injected<T & U>
+                        );
 
-                        if (result instanceof RestResult) {
-                            return result.send(res);
-                        }
-
-                        res.send(result);
+                        result.send(res);
                     } catch (err) {
                         if (err instanceof RestResult) {
                             return err.send(res);
                         }
-                        res.status(500).send(err.message);
+                        new RestError(err.message).send(res);
                     }
                 }
             ].filter(x => !!x)
