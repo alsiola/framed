@@ -6,28 +6,32 @@ import { RestError } from "../responses";
 
 export const getBody = <T>(req: Request): Promise<T> => {
     return new Promise((resolve, reject) => {
-        const bodyParts: Buffer[] = [];
-        let validBody = true;
+        try {
+            const bodyParts: Buffer[] = [];
+            let validBody = true;
 
-        req.on("data", chunk => {
-            if (typeof chunk === "string") {
-                validBody = false;
-                return;
-            }
-            bodyParts.push(chunk);
-        })
-            .on("error", err => reject(err))
-            .on("end", () => {
-                if (!validBody) {
-                    return reject("Invalid request body");
+            req.on("data", chunk => {
+                if (typeof chunk === "string") {
+                    validBody = false;
+                    return;
                 }
-                const body = JSON.parse(
-                    bodyParts.length > 0
-                        ? Buffer.concat(bodyParts).toString()
-                        : "{}"
-                );
-                resolve(body);
-            });
+                bodyParts.push(chunk);
+            })
+                .on("error", err => reject(err))
+                .on("end", () => {
+                    if (!validBody) {
+                        return reject("Invalid request body");
+                    }
+                    const body =
+                        bodyParts.length > 0
+                            ? JSON.parse(Buffer.concat(bodyParts).toString())
+                            : {};
+
+                    resolve(body);
+                });
+        } catch (err) {
+            reject(err);
+        }
     });
 };
 
@@ -42,7 +46,9 @@ const inject = (requestPart: RequestPart) => <A, O extends object, I>(
 ): Injector<Promise<O>, {}> => async ({ request }) => {
     const input =
         requestPart === RequestPart.body
-            ? await getBody(request)
+            ? await getBody(request).catch(err => {
+                  throw new RestError(err.message ? err.message : err, 500);
+              })
             : requestPart === RequestPart.params
                 ? request.params
                 : request.query;
