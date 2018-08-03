@@ -31,15 +31,37 @@ export const getBody = <T>(req: Request): Promise<T> => {
     });
 };
 
-export const injectBody = <A, O extends object, I>(
+enum RequestPart {
+    body = "body",
+    params = "params",
+    query = "query"
+}
+
+const inject = (requestPart: RequestPart) => <A, O extends object, I>(
     schema: t.InterfaceType<A, O, I>
 ): Injector<Promise<O>, {}> => async ({ request }) => {
-    const body = await getBody(request);
-    const result = schema.decode(body);
+    const input =
+        requestPart === RequestPart.body
+            ? await getBody(request)
+            : requestPart === RequestPart.params
+                ? request.params
+                : request.query;
+
+    const result = schema.decode(input);
 
     if (result.isLeft()) {
-        throw new RestError(PathReporter.report(result), 400) as any;
+        throw new RestError(
+            {
+                message: `Errors in ${requestPart}`,
+                errors: PathReporter.report(result)
+            },
+            400
+        ) as any;
     }
 
     return result.value;
 };
+
+export const body = inject(RequestPart.body);
+export const params = inject(RequestPart.params);
+export const query = inject(RequestPart.query);

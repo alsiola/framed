@@ -1,6 +1,5 @@
 import * as t from "io-ts";
-import { createApp, RestResult } from "../index";
-import { injectBody } from "../middleware/validation";
+import { createApp, injectors, RestResult } from "../index";
 
 interface Logger {
     info: (msg: any) => void;
@@ -33,9 +32,10 @@ app.controller({
     verb: "post",
     path: "/test2/:segmentId",
     inject: {
-        body: injectBody(body)
+        body: injectors.body(body)
     },
     handler: ({ logger, body: { userId } }) => {
+        logger.info("We got a request going on");
         return new RestResult(userId);
     }
 });
