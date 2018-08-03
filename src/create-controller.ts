@@ -18,7 +18,7 @@ export interface ControllerOpts<
     path: string;
     verb: HttpVerb;
     inject?: U;
-    handler: (req: Injected<T & U>) => any;
+    handler: (req: Injected<T & U>) => any | Promise<any>;
 }
 
 const runInjectors = <T extends Record<string, Injector<any>>>(
@@ -40,11 +40,11 @@ const runInjectors = <T extends Record<string, Injector<any>>>(
         };
     }, {});
 
-export function createController<T extends Record<string, Injector<any, any>>>(
+export const createController = <T extends Record<string, Injector<any, any>>>(
     app: Application,
     appInjectors: T,
     registerRoute: (route: ControllerOpts<T, any>) => void
-) {
+) => {
     return <U extends Record<string, Injector<any, any>>>({
         verb,
         path,
@@ -79,7 +79,7 @@ export function createController<T extends Record<string, Injector<any, any>>>(
                             ? await runInjectors(controllerInjectors, appCtx)
                             : appCtx;
 
-                        const result = handler(ctx as Injected<T & U>);
+                        const result = await handler(ctx as Injected<T & U>);
 
                         if (result instanceof RestResult) {
                             return result.send(res);
@@ -96,4 +96,4 @@ export function createController<T extends Record<string, Injector<any, any>>>(
             ].filter(x => !!x)
         );
     };
-}
+};

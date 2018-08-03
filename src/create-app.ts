@@ -34,7 +34,7 @@ export function createApp<T extends Record<string, Injector<any>>>({
     const routes: ControllerOpts<T, any>[] = [];
 
     const registerRoute = <U extends Record<string, Injector<any>>>(
-        route: ControllerOpts<T, U>
+        route: ControllerOpts<T, any>
     ) => {
         routes.push(route);
         swagger &&
