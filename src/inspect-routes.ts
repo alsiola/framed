@@ -31,8 +31,11 @@ const getParamType = (
 
 const paramRegex = /\:[a-zA-Z0-9]+\/?/;
 
-export const inspectRoutes = <T extends Record<string, Injector<any>>>(
-    routes: ControllerOpts<T>[]
+export const inspectRoutes = <
+    T extends Record<string, Injector<any>>,
+    U extends Record<string, Injector<any>>
+>(
+    routes: ControllerOpts<T, U>[]
 ) => (): RouteInfo[] => {
     return routes.map(({ verb, path, description = "" }) => {
         return {
