@@ -24,7 +24,7 @@ export interface ControllerOpts<
     ) => RestResult<any> | Promise<RestResult<any>>;
 }
 
-const runInjectors = <T extends Record<string, Injector<any>>>(
+const runInjectors = <T extends Record<string, Injector<any, any>>>(
     injectors: T,
     req: BaseRequest<{}>
 ) => {
@@ -50,7 +50,7 @@ export const createController = <T extends Record<string, Injector<any, any>>>(
     appInjectors: T,
     registerRoute: (route: ControllerOpts<T, any>) => void
 ) => {
-    return <U extends Record<string, Injector<any, any>>>({
+    return <U extends Record<string, Injector<any, Injected<T>>>>({
         verb,
         path,
         handler,
