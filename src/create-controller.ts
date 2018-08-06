@@ -1,6 +1,7 @@
 import { Application, Request, Response } from "express";
 import { BaseRequest, Injector } from "./create-app";
 import { RestError, RestResult } from "./responses";
+import { reduceAsync } from "./util/reduce-async";
 
 export type HttpVerb = "get" | "post";
 
@@ -26,21 +27,23 @@ export interface ControllerOpts<
 const runInjectors = <T extends Record<string, Injector<any>>>(
     injectors: T,
     req: BaseRequest<{}>
-) =>
-    Object.entries(injectors).reduce(async (out, [key, injector]) => {
-        const injectorCtx = {
-            ...out,
-            ...req
-        };
-
-        const injectorResult = await injector(injectorCtx);
-
-        return {
-            ...out,
-            ...req,
-            [key]: injectorResult
-        };
-    }, {});
+) => {
+    return reduceAsync(
+        (out, [key, injector]) =>
+            Promise.resolve(
+                injector({
+                    ...out,
+                    ...req
+                })
+            ).then(injectorResult => ({
+                ...out,
+                ...req,
+                [key]: injectorResult
+            })),
+        Object.entries(injectors),
+        {}
+    );
+};
 
 export const createController = <T extends Record<string, Injector<any, any>>>(
     app: Application,
@@ -78,8 +81,11 @@ export const createController = <T extends Record<string, Injector<any, any>>>(
                         )) as any;
 
                         const ctx = controllerInjectors
-                            ? await runInjectors(controllerInjectors, appCtx)
-                            : appCtx;
+                            ? await runInjectors(
+                                  controllerInjectors || {},
+                                  appCtx
+                              )
+                            : {};
 
                         const result: RestResult<any> = await handler(
                             ctx as Injected<T & U>

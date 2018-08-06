@@ -1,10 +1,6 @@
 import * as t from "io-ts";
 import { createApp, injectors, RestResult } from "../index";
 
-interface Logger {
-    info: (msg: any) => void;
-}
-
 const logger = () => ({
     info: (msg: any) => console.log("INFO: " + msg)
 });
@@ -27,16 +23,21 @@ const body = t.interface({
     userId: t.string
 });
 
+const params = t.interface({
+    segmentId: t.string
+});
+
 app.controller({
     description: "A test route",
     verb: "post",
     path: "/test2/:segmentId",
     inject: {
-        body: injectors.body(body)
+        body: injectors.body(body),
+        params: injectors.params(params)
     },
-    handler: ({ logger, body: { userId } }) => {
+    handler: ({ logger, body: { userId }, params: { segmentId } }) => {
         logger.info("We got a request going on");
-        return Promise.resolve(new RestResult({ userId }));
+        return Promise.resolve(new RestResult({ userId, segmentId }));
     }
 });
 
