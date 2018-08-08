@@ -34,8 +34,7 @@ app.controller({
     path: "/test2/:segmentId",
     inject: {
         body: injectors.body(body),
-        params: injectors.params(params),
-        logger: ({ logger }) => logger.child("Ctrl: test, ")
+        params: injectors.params(params)
     },
     handler: ({ logger, body: { userId }, params: { segmentId } }) => {
         logger.info("We got a request going on");

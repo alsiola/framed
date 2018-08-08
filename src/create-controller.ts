@@ -1,19 +1,19 @@
 import { Application, Request, Response } from "express";
-import { BaseRequest, Injector } from "./create-app";
+import { BaseRequest, Injector, InjectorRecord } from "./create-app";
 import { RestError, RestResult } from "./responses";
 import { reduceAsync } from "./util/reduce-async";
 
 export type HttpVerb = "get" | "post";
 
-export type Injected<T extends Record<string, Injector<any>>> = {
+export type Injected<T extends InjectorRecord> = {
     [K in keyof T]: T[K] extends Injector<Promise<infer U>>
         ? U
         : ReturnType<T[K]>
 };
 
 export interface ControllerOpts<
-    T extends Record<string, Injector<any, any>>,
-    U extends Record<string, Injector<any, any>>
+    T extends InjectorRecord,
+    U extends InjectorRecord<any, T>
 > {
     description?: string;
     path: string;
@@ -24,7 +24,7 @@ export interface ControllerOpts<
     ) => RestResult<any> | Promise<RestResult<any>>;
 }
 
-const runInjectors = <T extends Record<string, Injector<any, any>>>(
+const runInjectors = <T extends InjectorRecord<any, any>>(
     injectors: T,
     req: BaseRequest<{}>
 ) => {
@@ -45,12 +45,12 @@ const runInjectors = <T extends Record<string, Injector<any, any>>>(
     );
 };
 
-export const createController = <T extends Record<string, Injector<any, any>>>(
+export const createController = <T extends InjectorRecord>(
     app: Application,
     appInjectors: T,
     registerRoute: (route: ControllerOpts<T, any>) => void
 ) => {
-    return <U extends Record<string, Injector<any, Injected<T>>>>({
+    return <U extends InjectorRecord<any, T>>({
         verb,
         path,
         handler,
