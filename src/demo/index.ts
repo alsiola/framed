@@ -36,9 +36,9 @@ app.controller({
         body: injectors.body(body),
         params: injectors.params(params)
     },
-    handler: ({ logger, body: { userId }, params: { segmentId } }) => {
+    handler: async ({ logger, body: { userId }, params: { segmentId } }) => {
         logger.info("We got a request going on");
-        return Promise.resolve(new RestResult({ userId, segmentId }));
+        return new RestResult({ userId, segmentId });
     }
 });
 
